@@ -49,66 +49,46 @@ def to_3channel_gray(single_channel_image):
     return cv.merge([single_channel_image, single_channel_image, single_channel_image])
 
 
-def rgb_to_hsb(img):
+def rgb_to_color_spaces(img, color_space):
     """
-    This function converts RGB image to HSB color spaces
+    This function converts RGB image to other color spaces
     and displays it in a collage of original image alongside
-    3 grayscale versions of each channel of HSB color spaces.
+    3 grayscale versions of each channel of converted color spaces.
 
     Args:
-    - img (cv2:img): image object of cv2 in rgb
+    - img (cv2:img): cv2 image object of rgb image
+    - color_space (str): color space to convert image into
     """
     # convert to hsb
-    hsb_image = cv.cvtColor(img, cv.COLOR_BGR2HSV_FULL)
+    cv_converter_mapping = {
+        "hsb": cv.COLOR_BGR2HSV_FULL,
+        "lab": cv.COLOR_BGR2Lab
+    }
+    converted_image = cv.cvtColor(img, cv_converter_mapping[color_space])
 
     # split the hsb image into individual channels
-    h,s,b = cv.split(hsb_image)
-
-   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale
-   # and 3-channel original rgb image cannot be displayed in same window
-    h_3channel =  to_3channel_gray(h)
-    s_3channel = to_3channel_gray(s)
-    b_3channel = to_3channel_gray(b)
-
-    # Stack images horizontally
-    top_row = np.hstack([img, b_3channel])
-    bottom_row = np.hstack([h_3channel, s_3channel])
-
-    # Stack images vertically
-    final_img = np.vstack([top_row, bottom_row])
-
-    # Display the final image
-    display_image(final_img)
-
-
-def rgb_to_lab(img):
-    """
-    This function converts RGB image to Lab color spaces
-    and displays it in a collage of original image alongside
-    3 grayscale versions of each channel of Lab color spaces.
-
-    Args:
-    - img (cv2:img): image object of cv2 in rgb
-    """
-    # convert to hsb
-    lab_image = cv.cvtColor(img, cv.COLOR_BGR2Lab)
-
-    # split the hsb image into individual channels
-    l_grayscale, a_grayscale, b_grayscale = cv.split(lab_image)
+    first_color_grayscale, second_color_grayscale, third_color_grayscale = cv.split(converted_image)
 
    # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale 
    # and 3-channel original rgb image cannot be displayed in same window
-    l_3channel =  to_3channel_gray(l_grayscale)
-    a_3channel = to_3channel_gray(a_grayscale)
-    b_3channel = to_3channel_gray(b_grayscale)
+    first_color_3grayscale =  to_3channel_gray(first_color_grayscale)
+    second_color_3grayscale = to_3channel_gray(second_color_grayscale)
+    third_color_3grayscale = to_3channel_gray(third_color_grayscale)
 
-    # normalizing the pixel values to range of 0-255
-    a_3channel = cv.normalize(a_3channel, None, 0, 255, cv.NORM_MINMAX)
-    b_3channel = cv.normalize(b_3channel, None, 0, 255, cv.NORM_MINMAX)
+    if color_space == "lab":
+        # normalizing the pixel values to range of 0-255 for Lab color space
+        second_color_3grayscale = cv.normalize(second_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
+        third_color_3grayscale = cv.normalize(third_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
 
     # Stack images horizontally
-    top_row = np.hstack([img, l_3channel])
-    bottom_row = np.hstack([a_3channel, b_3channel])
+    if color_space == "hsb":
+        # for hsb color space 1st, 2nd and 3rd channels are to be displayed in 3rd, 4th and 1st quadrants respectively
+        top_row = np.hstack([img, third_color_3grayscale])
+        bottom_row = np.hstack([first_color_3grayscale, second_color_3grayscale])
+    else:
+        # for all other color spaces 1st, 2nd and 3rd channels are to be displayed in 1st, 3rd and 4th quadrants respectively
+        top_row = np.hstack([img, first_color_3grayscale])
+        bottom_row = np.hstack([second_color_3grayscale, third_color_3grayscale])
 
     # Stack images vertically
     final_img = np.vstack([top_row, bottom_row])
@@ -131,14 +111,6 @@ def main():
             print("Error: Invalid color space. Valid options are 'XYZ', 'Lab', 'YCrCb', 'HSB'")
             return
 
-        # Create a dictionary to map function names to function references
-        function_mapping = {
-                "hsb": rgb_to_hsb,
-                # "xyz": rgb_to_xyz,
-                "lab": rgb_to_lab,
-                # "ycrcb": rgb_to_ycrcb
-            }
-
         # Extract the image path
         image_path = sys.argv[2]
         check_image_exists(image_path)
@@ -151,8 +123,7 @@ def main():
             exit()
         else:
             # calling crossponding color space conversion function
-            function_mapping[color_space.lower()](image)
-            # split_rgb(image)
+            rgb_to_color_spaces(image,color_space.lower())
 
     # code for task 2
     else:
