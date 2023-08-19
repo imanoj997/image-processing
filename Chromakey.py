@@ -21,6 +21,20 @@ def check_image_exists(image_path):
         print(f"Error: {image_path} does not exist.")
         exit()
 
+def display_image(image):
+    """
+    This function display an image using opencv's imshow function.
+
+    Args:
+    - image: image to be displayed
+    """
+    cv.imshow('Four Images', image) # Displaying image
+
+    # Wait for a key press and then close the image window
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
 def to_3channel_gray(single_channel_image):
     """
     This function changes single channel grayscale image to
@@ -39,13 +53,10 @@ def rgb_to_hsb(img):
     """
     This function converts RGB image to HSB color spaces
     and displays it in a collage of original image alongside
-    3 grayscale versions of each band of HSB color spaces.
+    3 grayscale versions of each channel of HSB color spaces.
 
     Args:
-    - img (cv2:img): image object of cv2
-
-    Returns:
-    - None
+    - img (cv2:img): image object of cv2 in rgb
     """
     # convert to hsb
     hsb_image = cv.cvtColor(img, cv.COLOR_BGR2HSV_FULL)
@@ -68,12 +79,47 @@ def rgb_to_hsb(img):
     final_img = np.vstack([top_row, bottom_row])
 
     # Display the final image
-    cv.imshow('Four Images', final_img)
+    display_image(final_img)
 
-    # Wait for a key press and then close the image window
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
+def rgb_to_lab(img):
+    """
+    This function converts RGB image to Lab color spaces
+    and displays it in a collage of original image alongside
+    3 grayscale versions of each channel of Lab color spaces.
+
+    Args:
+    - img (cv2:img): image object of cv2 in rgb
+
+    Returns:
+    - None
+    """
+    # convert to hsb
+    lab_image = cv.cvtColor(img, cv.COLOR_BGR2Lab)
+
+    # split the hsb image into individual channels
+    l_grayscale, a_grayscale, b_grayscale = cv.split(lab_image)
+
+   # Convert single channel grayscale images to 3-channel grayscale images
+   # because single channel grayscale and 3-channel original rgb image
+   # cannot be displayed in same window
+    l_3channel =  to_3channel_gray(l_grayscale)
+    a_3channel = to_3channel_gray(a_grayscale)
+    b_3channel = to_3channel_gray(b_grayscale)
+
+    # normalizing the pixel values to range of 0-255
+    a_3channel = cv.normalize(a_3channel, None, 0, 255, cv.NORM_MINMAX)
+    b_3channel = cv.normalize(b_3channel, None, 0, 255, cv.NORM_MINMAX)
+
+    # Stack images horizontally
+    top_row = np.hstack([img, l_3channel])
+    bottom_row = np.hstack([a_3channel, b_3channel])
+
+    # Stack images vertically
+    final_img = np.vstack([top_row, bottom_row])
+
+    # Display the final image
+    display_image(final_img)
 
 def split_rgb(img):
     # split the hsb image into individual channels
@@ -96,13 +142,6 @@ def split_rgb(img):
     # Stack images vertically
     final_img = np.vstack([top_row, bottom_row])
 
-    # Display the final image
-    cv.imshow('Four Images', final_img)
-
-    # Wait for a key press and then close the image window
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
 def main():
     if len(sys.argv) != 3:
         print("Error: Invalid command \n Use 'python Chromakey.py -color_space image_path' to run task 1 \n \
@@ -117,6 +156,14 @@ def main():
             print("Error: Invalid color space. Valid options are 'XYZ', 'Lab', 'YCrCb', 'HSB'")
             return
 
+        # Create a dictionary to map function names to function references
+        function_mapping = {
+                "hsb": rgb_to_hsb,
+                # "xyz": rgb_to_xyz,
+                "lab": rgb_to_lab,
+                # "ycrcb": rgb_to_ycrcb
+            }
+
         # Extract the image path
         image_path = sys.argv[2]
         check_image_exists(image_path)
@@ -128,7 +175,8 @@ def main():
             print("Error loading image")
             exit()
         else:
-            rgb_to_hsb(image)
+            # calling crossponding color space conversion function
+            function_mapping[color_space.lower()](image)
             # split_rgb(image)
 
     # code for task 2
