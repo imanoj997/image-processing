@@ -33,18 +33,52 @@ def rgb_to_hsb(img):
     Returns:
     - None
     """
-    # Display the image`ß
-    cv.imshow("Original Image Display", img)
-
+    # convert to hsb
     hsb_image = cv.cvtColor(img, cv.COLOR_BGR2HSV_FULL)
-    # cv.imshow("hsb",hsb_image)
 
     # split the hsb image into individual channels
     h,s,b = cv.split(hsb_image)
 
+   # Convert single channel grayscale images to 3-channel grayscale images to display same window as 3-dimension original image
+    def to_3channel_gray(single_channel):
+        return cv.merge([single_channel, single_channel, single_channel])
+
+    h_3channel = to_3channel_gray(h)
+    s_3channel = to_3channel_gray(s)
+    b_3channel = to_3channel_gray(b)
+
     # Stack images horizontally
-    top_row = np.hstack([img, b])
-    bottom_row = np.hstack([h, s])
+    top_row = np.hstack([img, b_3channel])
+    bottom_row = np.hstack([h_3channel, s_3channel])
+
+    # Stack images vertically
+    final_img = np.vstack([top_row, bottom_row])
+
+    # Display the final image
+    cv.imshow('Four Images', final_img)
+
+    # Wait for a key press and then close the image window
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
+def split_rgb(img):
+    # split the hsb image into individual channels
+    r,g,b = cv.split(img)
+
+   # Convert 1-channel grayscale images to 3-channel grayscale images to display on same window as 3-dimension original image
+    def to_3channel_gray(single_channel):
+        return cv.merge([single_channel, single_channel, single_channel])
+
+    r_3channel = to_3channel_gray(r)
+    g_3channel = to_3channel_gray(g)
+    b_3channel = to_3channel_gray(b)
+
+    print(g_3channel[100,100])
+
+    # Stack images horizontally
+    top_row = np.hstack([img, b_3channel])
+    bottom_row = np.hstack([r_3channel, g_3channel])
 
     # Stack images vertically
     final_img = np.vstack([top_row, bottom_row])
@@ -82,7 +116,7 @@ def main():
             exit()
         else:
             rgb_to_hsb(image)
-            pass
+            # split_rgb(image)
 
     # code for task 2
     else:
