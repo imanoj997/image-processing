@@ -209,7 +209,7 @@ def chorma_keying(green_screen_img, background_img):
     final_img = np.vstack([top_row, bottom_row])
 
     # Display the final collage image
-    cv.imshow('Chroma Keying Results', composite)
+    cv.imshow('Chroma Keying Results', final_img)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
