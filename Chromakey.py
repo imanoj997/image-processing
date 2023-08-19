@@ -115,6 +115,20 @@ def rgb_to_color_spaces(img, color_space):
     display_image(final_img)
 
 
+def chorma_keying(subject_img, background_img):
+    """
+    This function converts performs chroma keying techniques.
+    Replaces green background screen from and image and replaces it
+    with another background image.
+
+    Args:
+    - subject_img (cv2:img): cv2 image object of subject with greenscreen background
+    - background_img (cv2:img): cv2 image object of background to put subject in
+    """
+    display_image(subject_img)
+    display_image(background_img)
+
+
 def main():
     if len(sys.argv) != 3:
         print("Error: Invalid command \n Use 'python Chromakey.py -color_space image_path' to run task 1 \n \
@@ -137,7 +151,7 @@ def main():
 
         # Check if image was successfully loaded
         if image is None:
-            print("Error loading image")
+            print("Error: Cannot load image, might be a corrupted image.")
             exit()
         else:
             # calling crossponding color space conversion function
@@ -145,9 +159,27 @@ def main():
 
     # code for task 2
     else:
-        #runtask2
-        print("task 2-------------")
-        return
+        # Extract the image path
+        background_img_path = sys.argv[1]
+        subject_img_path = sys.argv[2]
+
+        # check if paths are valid
+        check_image_exists(background_img_path)
+        check_image_exists(subject_img_path)
+
+        # Read the image
+        subject_img = cv.imread(subject_img_path)
+        background_img = cv.imread(background_img_path)
+
+        # Check if image was successfully loaded
+        if subject_img is None or background_img is None:
+            print("Error: Cannot load image, might be a corrupted image.")
+            exit()
+        else:
+            subject_img = cv.cvtColor(subject_img, cv.COLOR_BGR2HSV_FULL)
+            background_img = cv.cvtColor(background_img, cv.COLOR_BGR2HSV_FULL)
+            chorma_keying(subject_img, background_img)
+
 
 if __name__ == "__main__":
     # start python program execution
