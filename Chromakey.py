@@ -28,6 +28,18 @@ def display_image(image):
     Args:
     - image: image to be displayed
     """
+    # Check the final image's dimensions to ensure it is within 1280*720
+    height, width = image.shape[:2]
+
+    # Calculate scaling factors
+    scale_width = 1280 / width
+    scale_height = 720 / height
+    scale = min(scale_width, scale_height)
+    # If any scaling factor is less than 1, resize the image maintaining aspect ratio
+    if scale < 1:
+        image = cv.resize(image, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
+
+    # display the final image
     cv.imshow('Four Images', image) # Displaying image
 
     # Wait for a key press and then close the image window
