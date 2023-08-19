@@ -62,7 +62,9 @@ def rgb_to_color_spaces(img, color_space):
     # convert to hsb
     cv_converter_mapping = {
         "hsb": cv.COLOR_BGR2HSV_FULL,
-        "lab": cv.COLOR_BGR2Lab
+        "lab": cv.COLOR_BGR2Lab,
+        "xyz": cv.COLOR_BGR2XYZ,
+        "ycrcb": cv.COLOR_BGR2YCrCb
     }
     converted_image = cv.cvtColor(img, cv_converter_mapping[color_space])
 
@@ -75,10 +77,14 @@ def rgb_to_color_spaces(img, color_space):
     second_color_3grayscale = to_3channel_gray(second_color_grayscale)
     third_color_3grayscale = to_3channel_gray(third_color_grayscale)
 
-    if color_space == "lab":
-        # normalizing the pixel values to range of 0-255 for Lab color space
+    if color_space in ("lab", "ycrcb"):
+        # normalizing the a and b pixel values to range of 0-255 for Lab color space because they originally have [-127,127] range
+        # normalizing the Cr and Cb pixel values to range of 0-255 for YCrCb color space because they originally have [16, 240] range
         second_color_3grayscale = cv.normalize(second_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
         third_color_3grayscale = cv.normalize(third_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
+        if color_space == "ycrcb":
+            # normalizing the Y pixel values to range of 0-255 for YCrCb color space because they originally have [16, 235] range
+            first_color_3grayscale = cv.normalize(first_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
 
     # Stack images horizontally
     if color_space == "hsb":
