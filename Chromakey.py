@@ -64,9 +64,8 @@ def rgb_to_hsb(img):
     # split the hsb image into individual channels
     h,s,b = cv.split(hsb_image)
 
-   # Convert single channel grayscale images to 3-channel grayscale images
-   # because single channel grayscale and 3-channel original rgb image
-   # cannot be displayed in same window
+   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale
+   # and 3-channel original rgb image cannot be displayed in same window
     h_3channel =  to_3channel_gray(h)
     s_3channel = to_3channel_gray(s)
     b_3channel = to_3channel_gray(b)
@@ -90,9 +89,6 @@ def rgb_to_lab(img):
 
     Args:
     - img (cv2:img): image object of cv2 in rgb
-
-    Returns:
-    - None
     """
     # convert to hsb
     lab_image = cv.cvtColor(img, cv.COLOR_BGR2Lab)
@@ -100,9 +96,8 @@ def rgb_to_lab(img):
     # split the hsb image into individual channels
     l_grayscale, a_grayscale, b_grayscale = cv.split(lab_image)
 
-   # Convert single channel grayscale images to 3-channel grayscale images
-   # because single channel grayscale and 3-channel original rgb image
-   # cannot be displayed in same window
+   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale 
+   # and 3-channel original rgb image cannot be displayed in same window
     l_3channel =  to_3channel_gray(l_grayscale)
     a_3channel = to_3channel_gray(a_grayscale)
     b_3channel = to_3channel_gray(b_grayscale)
@@ -121,26 +116,6 @@ def rgb_to_lab(img):
     # Display the final image
     display_image(final_img)
 
-def split_rgb(img):
-    # split the hsb image into individual channels
-    r,g,b = cv.split(img)
-
-   # Convert 1-channel grayscale images to 3-channel grayscale images to display on same window as 3-dimension original image
-    def to_3channel_gray(single_channel):
-        return cv.merge([single_channel, single_channel, single_channel])
-
-    r_3channel = to_3channel_gray(r)
-    g_3channel = to_3channel_gray(g)
-    b_3channel = to_3channel_gray(b)
-
-    print(g_3channel[100,100])
-
-    # Stack images horizontally
-    top_row = np.hstack([img, b_3channel])
-    bottom_row = np.hstack([r_3channel, g_3channel])
-
-    # Stack images vertically
-    final_img = np.vstack([top_row, bottom_row])
 
 def main():
     if len(sys.argv) != 3:
