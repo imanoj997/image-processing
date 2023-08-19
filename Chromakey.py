@@ -21,6 +21,20 @@ def check_image_exists(image_path):
         print(f"Error: {image_path} does not exist.")
         exit()
 
+def to_3channel_gray(single_channel_image):
+    """
+    This function changes single channel grayscale image to
+    3 channel grayscale image.
+
+    Args:
+    - single_channel_image: single channel grayscale image to convert
+
+    Returns:
+    - 3 channel grayscale image
+    """
+    return cv.merge([single_channel_image, single_channel_image, single_channel_image])
+
+
 def rgb_to_hsb(img):
     """
     This function converts RGB image to HSB color spaces
@@ -39,11 +53,10 @@ def rgb_to_hsb(img):
     # split the hsb image into individual channels
     h,s,b = cv.split(hsb_image)
 
-   # Convert single channel grayscale images to 3-channel grayscale images to display same window as 3-dimension original image
-    def to_3channel_gray(single_channel):
-        return cv.merge([single_channel, single_channel, single_channel])
-
-    h_3channel = to_3channel_gray(h)
+   # Convert single channel grayscale images to 3-channel grayscale images
+   # because single channel grayscale and 3-channel original rgb image
+   # cannot be displayed in same window
+    h_3channel =  to_3channel_gray(h)
     s_3channel = to_3channel_gray(s)
     b_3channel = to_3channel_gray(b)
 
