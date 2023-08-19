@@ -181,17 +181,17 @@ def chorma_keying(green_screen_img, background_img):
 
     # Set thresholds for green color in terms of HSV chanels
     lower_green_thresholds = np.array([35, 60, 40])
-    upper_green_thresholds = np.array([90, 255, 255])
+    upper_green_thresholds = np.array([95, 255, 235])
 
     # Set a mask to isolate subject from green background
     mask = cv.inRange(green_screen_img_hsb, lower_green_thresholds, upper_green_thresholds)
 
-    # Refine the mask
+    # Refine the mask using morphological operations to reduce noise
     kernel = np.ones((5,5),np.uint8)
     mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
     mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
 
-    # Extract the subject
+    # Extract the subject using bitwise opeartions with inverse mask
     subject = cv.bitwise_and(green_screen_img, green_screen_img, mask=~mask)
 
     # Extracted subject with white background
@@ -209,7 +209,7 @@ def chorma_keying(green_screen_img, background_img):
     final_img = np.vstack([top_row, bottom_row])
 
     # Display the final collage image
-    cv.imshow('Chroma Keying Results', final_img)
+    cv.imshow('Chroma Keying Results', composite)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
