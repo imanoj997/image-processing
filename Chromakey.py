@@ -73,13 +73,14 @@ def check_image_exists(image_path):
         exit()
 
 
-def display_image(image):
+def display_image(image, window_name):
     """
     This function check the input image's dimensions to ensure it is less than 1280*720,
     then displays the image using opencv's imshow function.
 
     Args:
-    - image: image to be displayed
+    - image (cv2: img): image to be displayed
+    - window_name (str): name of the window to display image
     """
     height, width = image.shape[:2]
 
@@ -92,7 +93,7 @@ def display_image(image):
         image = cv.resize(image, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
 
     # Display the final image
-    cv.imshow('Four Images', image) # Displaying image
+    cv.imshow(window_name, image) # Displaying image
 
     # Wait for a key press and then close the image window
     cv.waitKey(0)
@@ -164,7 +165,7 @@ def rgb_to_color_spaces(img, color_space):
     final_img = np.vstack([top_row, bottom_row])
 
     # Display the final image
-    display_image(final_img)
+    display_image(final_img, "Color Space Conversion")
 
 
 def chorma_keying(green_screen_img, scenic_img):
@@ -212,7 +213,7 @@ def chorma_keying(green_screen_img, scenic_img):
     final_img = np.vstack([top_row, bottom_row])
 
     # Display the final collage image
-    display_image(final_img)
+    display_image(final_img, "Chromakey")
 
 
 def main():
