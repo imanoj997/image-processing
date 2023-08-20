@@ -166,7 +166,7 @@ def rgb_to_color_spaces(img, color_space):
     display_image(final_img)
 
 
-def chorma_keying(green_screen_img, background_img):
+def chorma_keying(green_screen_img, scenic_img):
     """
     This function converts performs chroma keying techniques.
     Replaces green background screen from and image and replaces it
@@ -174,7 +174,7 @@ def chorma_keying(green_screen_img, background_img):
 
     Args:
     - green_screen_img (cv2:img): cv2 image object of subject with greenscreen background
-    - background_img (cv2:img): cv2 image object of background to put subject in
+    - scenic_img (cv2:img): cv2 image object of background to put subject in
     """
     # Convert greenscreen image to HSB for better object separation
     green_screen_img_hsb = cv.cvtColor(green_screen_img, cv.COLOR_BGR2HSV)
@@ -198,12 +198,12 @@ def chorma_keying(green_screen_img, background_img):
     extracted_subject = subject + cv.cvtColor(mask, cv.COLOR_GRAY2BGR)
 
     # Place subject on scenic background
-    scenic_opening = cv.bitwise_and(background_img, background_img, mask=mask)
-    composite = background_img + subject
+    scenic_opening = cv.bitwise_and(scenic_img, scenic_img, mask=mask)
+    composite = scenic_img + subject
 
     # Stack images horizontally
     top_row = np.hstack([green_screen_img, extracted_subject])
-    bottom_row = np.hstack([background_img, composite])
+    bottom_row = np.hstack([scenic_img, composite])
 
     # Stack images vertically
     final_img = np.vstack([top_row, bottom_row])
@@ -243,25 +243,25 @@ def main():
     # code for task 2
     else:
         # Extract the image path
-        background_img_path = sys.argv[1]
+        scenic_img_path = sys.argv[1]
         green_screen_path = sys.argv[2]
 
         # check if paths are valid
-        check_image_exists(background_img_path)
+        check_image_exists(scenic_img_path)
         check_image_exists(green_screen_path)
 
         # Read the image
         green_screen_img = cv.imread(green_screen_path)
-        background_img = cv.imread(background_img_path)
+        scenic_img = cv.imread(scenic_img_path)
 
         # Check if image was successfully loaded
-        if green_screen_img is None or background_img is None:
+        if green_screen_img is None or scenic_img is None:
             print("Error: Cannot load image, might be a corrupted image.")
             exit()
         else:
-            # Convert to HSB color space for better color segmentation
-            green_screen_img, background_img = resize_to_larger(green_screen_img, background_img)
-            chorma_keying(green_screen_img, background_img)
+            # Resize the images to be same size and less than 1280*720
+            green_screen_img, scenic_img = resize_to_larger(green_screen_img, scenic_img)
+            chorma_keying(green_screen_img, scenic_img)
 
 
 if __name__ == "__main__":
