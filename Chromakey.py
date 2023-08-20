@@ -73,7 +73,7 @@ def check_image_exists(image_path):
         exit()
 
 
-def display_image(image, window_name):
+def display_image(image, window_name="Image"):
     """
     This function check the input image's dimensions to ensure it is less than 1280*720,
     then displays the image using opencv's imshow function.
@@ -182,8 +182,8 @@ def chorma_keying(green_screen_img, scenic_img):
     green_screen_img_hsb = cv.cvtColor(green_screen_img, cv.COLOR_BGR2HSV)
 
     # Set thresholds for green color in terms of HSV chanels
-    lower_green_thresholds = np.array([35, 60, 40])
-    upper_green_thresholds = np.array([95, 255, 235])
+    lower_green_thresholds = np.array([40, 80, 80])
+    upper_green_thresholds = np.array([75, 255, 255])
 
     # Set a mask to isolate subject from green background
     mask = cv.inRange(green_screen_img_hsb, lower_green_thresholds, upper_green_thresholds)
@@ -226,7 +226,7 @@ def main():
     if not '.' in sys.argv[1]:
         # Extract the argument without the "-" to identify color space
         color_space = sys.argv[1][1:]
-        if color_space not in ("XYZ", "Lab", "YCrCb", "HSB"):
+        if color_space not in ("XYZ", "Lab", "YCrCb", "HSB", "RGB"):
             print("Error: Invalid color space. Valid options are 'XYZ', 'Lab', 'YCrCb', 'HSB'")
             exit()
 
