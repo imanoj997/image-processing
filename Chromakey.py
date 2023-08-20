@@ -72,14 +72,15 @@ def check_image_exists(image_path):
         print(f"Error: {image_path} does not exist.")
         exit()
 
+
 def display_image(image):
     """
-    This function display an image using opencv's imshow function.
+    This function check the input image's dimensions to ensure it is less than 1280*720,
+    then displays the image using opencv's imshow function.
 
     Args:
     - image: image to be displayed
     """
-    # Check the final image's dimensions to ensure it is within 1280*720
     height, width = image.shape[:2]
 
     # Calculate scaling factors
@@ -90,7 +91,7 @@ def display_image(image):
     if scale < 1:
         image = cv.resize(image, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
 
-    # display the final image
+    # Display the final image
     cv.imshow('Four Images', image) # Displaying image
 
     # Wait for a key press and then close the image window
@@ -122,7 +123,7 @@ def rgb_to_color_spaces(img, color_space):
     - img (cv2:img): cv2 image object of rgb image
     - color_space (str): color space to convert image into
     """
-    # convert to hsb
+    # Mapping color spaces with crossponding opencv conversion functions
     cv_converter_mapping = {
         "hsb": cv.COLOR_BGR2HSV_FULL,
         "lab": cv.COLOR_BGR2Lab,
@@ -134,19 +135,19 @@ def rgb_to_color_spaces(img, color_space):
     # split the hsb image into individual channels
     first_color_grayscale, second_color_grayscale, third_color_grayscale = cv.split(converted_image)
 
-   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale 
-   # and 3-channel original rgb image cannot be displayed in same window
+   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale
+   # and 3-channel original RGB image cannot be displayed in same window
     first_color_3grayscale =  to_3channel_gray(first_color_grayscale)
     second_color_3grayscale = to_3channel_gray(second_color_grayscale)
     third_color_3grayscale = to_3channel_gray(third_color_grayscale)
 
     if color_space in ("lab", "ycrcb"):
-        # normalizing the a and b pixel values to range of 0-255 for Lab color space because they originally have [-127,127] range
-        # normalizing the Cr and Cb pixel values to range of 0-255 for YCrCb color space because they originally have [16, 240] range
+        # normalizing the a and b channel pixel values to range of 0-255 for Lab color space because they originally have [-127,127] range
+        # normalizing the Cr and Cb channel pixel values to range of 0-255 for YCrCb color space because they originally have [16, 240] range
         second_color_3grayscale = cv.normalize(second_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
         third_color_3grayscale = cv.normalize(third_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
         if color_space == "ycrcb":
-            # normalizing the Y pixel values to range of 0-255 for YCrCb color space because they originally have [16, 235] range
+            # normalizing the Y channel pixel values to range of 0-255 for YCrCb color space because they originally have [16, 235] range
             first_color_3grayscale = cv.normalize(first_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
 
     # Stack images horizontally
@@ -191,19 +192,20 @@ def chorma_keying(green_screen_img, scenic_img):
     mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
     mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
 
-    # Extract the subject using bitwise opeartions with inverse mask
+    # Extract the subject using bitwise opeartions with inverse mask,
+    # only the pixels with value 255, which is subject in inverse of mask will be retained
     subject = cv.bitwise_and(green_screen_img, green_screen_img, mask=~mask)
 
     # Extracted subject with white background
-    extracted_subject = subject + cv.cvtColor(mask, cv.COLOR_GRAY2BGR)
+    subject_white_bg = subject + cv.cvtColor(mask, cv.COLOR_GRAY2BGR)
 
-    # Place subject on scenic background
+    # Cutout subject layout on background and place subject on scenic background
     scenic_opening = np.copy(scenic_img)[0:scenic_img.shape[0], 0:scenic_img.shape[1]]
     scenic_opening[mask == 0] = [0, 0, 0]
     composite = scenic_opening + subject
 
     # Stack images horizontally
-    top_row = np.hstack([green_screen_img, extracted_subject])
+    top_row = np.hstack([green_screen_img, subject_white_bg])
     bottom_row = np.hstack([scenic_img, composite])
 
     # Stack images vertically
@@ -225,7 +227,7 @@ def main():
         color_space = sys.argv[1][1:]
         if color_space not in ("XYZ", "Lab", "YCrCb", "HSB"):
             print("Error: Invalid color space. Valid options are 'XYZ', 'Lab', 'YCrCb', 'HSB'")
-            return
+            exit()
 
         # Extract the image path
         image_path = sys.argv[2]
@@ -243,21 +245,21 @@ def main():
 
     # code for task 2
     else:
-        # Extract the image path
+        # Extract the image paths
         scenic_img_path = sys.argv[1]
         green_screen_path = sys.argv[2]
 
-        # check if paths are valid
+        # Check if paths are valid
         check_image_exists(scenic_img_path)
         check_image_exists(green_screen_path)
 
-        # Read the image
+        # Read the images
         green_screen_img = cv.imread(green_screen_path)
         scenic_img = cv.imread(scenic_img_path)
 
         # Check if image was successfully loaded
         if green_screen_img is None or scenic_img is None:
-            print("Error: Cannot load image, might be a corrupted image.")
+            print("Error: Can't load image, might be corrupted.")
             exit()
         else:
             # Resize the images to be same size and less than 1280*720
