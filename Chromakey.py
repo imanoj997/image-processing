@@ -198,8 +198,9 @@ def chorma_keying(green_screen_img, scenic_img):
     extracted_subject = subject + cv.cvtColor(mask, cv.COLOR_GRAY2BGR)
 
     # Place subject on scenic background
-    scenic_opening = cv.bitwise_and(scenic_img, scenic_img, mask=mask)
-    composite = scenic_img + subject
+    scenic_opening = np.copy(scenic_img)[0:scenic_img.shape[0], 0:scenic_img.shape[1]]
+    scenic_opening[mask == 0] = [0, 0, 0]
+    composite = scenic_opening + subject
 
     # Stack images horizontally
     top_row = np.hstack([green_screen_img, extracted_subject])
