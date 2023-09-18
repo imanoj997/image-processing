@@ -133,7 +133,7 @@ def display_sift_features(image, image_name):
         cv.line(working_image, (x, y - line_length), (x, y + line_length), (0, 0, 255), 1)
 
     # Draw the keypoints with circles and orientation lines on the working image
-    image_w_keypoints = cv.drawKeypoints(y_channel, kp, working_image, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    image_w_keypoints = cv.drawKeypoints(image, kp, outImage=None, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     # Stack the original image and the image with keypoints side-by-side for comparison
     final_image = np.hstack([image, image_w_keypoints])
