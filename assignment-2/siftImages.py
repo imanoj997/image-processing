@@ -5,17 +5,15 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 
-import cv2 as cv
-
 def resize_to_vga(img):
     """
     This function resizes the image to be roughly VGA size (480x600) while maintaining its aspect ratio.
 
     Args:
-    - img (cv2:img): image to be resized
+    - img (cv:img): image to be resized
 
     Returns:
-    - Resized image (cv2:img)
+    - Resized image (cv:img)
     """
     # Get image dimensions
     h, w = img.shape[:2]
@@ -68,7 +66,7 @@ def display_image(image, window_name="Image"):
     then displays the image using opencv's imshow function.
 
     Args:
-    - image (cv2: img): image to be displayed
+    - image (cv: img): image to be displayed
     - window_name (str): name of the window to display image
     """
     height, width = image.shape[:2]
@@ -93,7 +91,7 @@ def sift_extractor(image, extract_des=False):
     Extracts and returns SIFT keypoints and descriptors from an image
 
     Args:
-    - image (cv2: img): Image from which to extract SIFT keypoints and descriptors
+    - image (cv: img): Image from which to extract SIFT keypoints and descriptors
     - extract_des (boolean): to extract descriptors or not - default fasle
     """
     # Initialize the SIFT detector
@@ -108,13 +106,14 @@ def sift_extractor(image, extract_des=False):
 
     return kp, des
 
+
 def display_sift_features(image, image_name):
     """
     Extracts SIFT keypoints from the luminance (Y) component of an image 
     and displays the image with the keypoints highlighted.
 
     Args:
-    - image (cv2: img): Image from which to extract SIFT keypoints.
+    - image (cv: img): Image from which to extract SIFT keypoints.
     - image_name (str): name of the image
     """
     working_image = image.copy()
@@ -142,18 +141,77 @@ def display_sift_features(image, image_name):
     print(f"# of keypoints in {image_name} is {len(kp)}")
 
 
-def to_3channel_gray(single_channel_image):
+def compute_chi_square_distance(his1, his2):
     """
-    This function changes single channel grayscale image to
-    3 channel grayscale image.
+    Calculates chi-squared distance between two histograms
 
-    Args:
-    - single_channel_image: single channel grayscale image to convert
-
-    Returns:
-    - 3 channel grayscale image
+    - his1: first histogram
+    - his2: second histogram
     """
-    return cv.merge([single_channel_image, single_channel_image, single_channel_image])
+    return 0.5 * np.sum(((his1 - his2) ** 2) / (his1 + his2 + 1e-10))
+
+
+def compute_k_values(descriptors, percentages):
+    return [int(len(descriptors) * perc) for perc in percentages]
+
+
+def perform_kmeans_clustering(descriptors, k_val):
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.2)
+    _, lbls, centers = cv.kmeans(descriptors.astype(np.float32), k_val, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
+    return lbls
+
+
+def compute_histograms(descriptors, lbls, count, k_val):
+    hists = []
+    for idx in range(count):
+        current_desc = descriptors[idx::count]
+        current_labels = lbls[idx::count]
+        hist_data, _ = np.histogram(current_labels, bins=range(k_val + 1))
+        hists.append(hist_data)
+    return hists
+
+
+def print_dissimilarity_matrix(matrix, labels):
+    print("\t" + "\t".join(labels))
+    for i, values in enumerate(matrix):
+        formatted_values = ["{:.2f}".format(val) for val in values]
+        print(f"{labels[i]}\t" + "\t".join(formatted_values))
+
+
+def display_dissimilarity_matrix(keypoints_list, descriptors_list):
+    """
+    When given an array of images, combine descriptors from all images,
+    applies k-means clustering and computes dissimilarity matrix for all images
+
+    - keypoints_list (array): array of keypoints from all images
+    - descriptors_list (array): array of descriptors from all images
+    """
+    percentages = [0.05, 0.10, 0.20]
+    all_k_values = compute_k_values(keypoints_list, percentages)
+
+    labels = perform_kmeans_clustering(np.array(descriptors_list), all_k_values[0])
+
+    image_count = len(sys.argv) - 1
+    hists = compute_histograms(descriptors_list, labels, image_count, all_k_values[0])
+
+    for K, perc in zip(all_k_values, percentages):
+        print(f"\nK={perc*100}%*(total number of key-points)={K}")
+        print("Dissimilarity Matrix")
+
+        image_tags = [chr(65 + i) for i in range(image_count)]
+        matrix = np.zeros((image_count, image_count))
+
+        for i in range(image_count):
+            for j in range(i, image_count):
+                dist = compute_chi_square_distance(hists[i], hists[j])
+                matrix[i, j] = dist
+                matrix[j, i] = dist
+
+        max_val = np.max(matrix)
+        min_val = np.min(matrix)
+        norm_matrix = (matrix - min_val) / (max_val - min_val + 1e-10)
+
+        print_dissimilarity_matrix(norm_matrix, image_tags)
 
 def main():
     if len(sys.argv) == 1:
@@ -179,13 +237,13 @@ def main():
             display_sift_features(resized_image, image_name)
     # Code for task 1 in case of more tgan 1 images as argument
     else:
+        image_path_array = sys.argv[1:]
+
         # Intialize arrays to store keypoints and descriptors for future use
         keypoints_list = []
         descriptors_list = []
 
-        images = sys.argv[1:]
-
-        for image_path in images:
+        for image_path in image_path_array:
             # Read the image
             image = cv.imread(image_path)
             resized_image = resize_to_vga(image) # resize the image close to VGA size
@@ -200,11 +258,11 @@ def main():
             kp, des = sift_extractor(y_channel) # Extract keypoints and descriptors
 
             # Add keypoints and descriptors to an array
-            keypoints_list.append(kp)
-            descriptors_list.append(des)
+            keypoints_list += [k for k in kp]
+            descriptors_list += [d for d in des]
 
             print(f"# of keypoints in {image_name} is {len(kp)}")
-        exit()
+        display_dissimilarity_matrix(keypoints_list, descriptors_list)
 
 
 if __name__ == "__main__":
