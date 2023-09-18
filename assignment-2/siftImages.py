@@ -88,8 +88,27 @@ def display_image(image, window_name="Image"):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
+def sift_extractor(image, extract_des=False):
+    """
+    Extracts and returns SIFT keypoints and descriptors from an image
 
-def sift_extractor(image, image_name):
+    Args:
+    - image (cv2: img): Image from which to extract SIFT keypoints and descriptors
+    - extract_des (boolean): to extract descriptors or not - default fasle
+    """
+    # Initialize the SIFT detector
+    sift = cv.SIFT_create()
+    if extract_des:
+        # Extract SIFT keypoints from the Y component
+        kp = sift.detect(image, None)
+        des = None
+    else:
+        # Extract SIFT keypoints and descriptors from the Y component
+        kp, des = sift.detectAndCompute(image, None)
+
+    return kp, des
+
+def display_sift_features(image, image_name):
     """
     Extracts SIFT keypoints from the luminance (Y) component of an image 
     and displays the image with the keypoints highlighted.
@@ -98,25 +117,24 @@ def sift_extractor(image, image_name):
     - image (cv2: img): Image from which to extract SIFT keypoints.
     - image_name (str): name of the image
     """
-    work_image = image.copy()
-    yuv = cv.cvtColor(work_image, cv.COLOR_BGR2YUV)
-    # Initialize the SIFT detector
-    sift = cv.SIFT_create()
+    working_image = image.copy()
+    yuv = cv.cvtColor(working_image, cv.COLOR_BGR2YUV)
+
     # Extract the Y (luminance) component from the YUV image
     y_channel = yuv[:,:,0]
 
     # Detect SIFT keypoints from the Y component
-    kp = sift.detect(y_channel, None)
+    kp = sift_extractor(y_channel)[0]
 
     # Loop through each detected keypoint to draw a cross
     for keypoint in kp:
         x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
         line_length = 5
-        cv.line(work_image, (x - line_length, y), (x + line_length, y), (0, 0, 255), 1)
-        cv.line(work_image, (x, y - line_length), (x, y + line_length), (0, 0, 255), 1)
+        cv.line(working_image, (x - line_length, y), (x + line_length, y), (0, 0, 255), 1)
+        cv.line(working_image, (x, y - line_length), (x, y + line_length), (0, 0, 255), 1)
 
     # Draw the keypoints with circles and orientation lines on the working image
-    image_w_keypoints = cv.drawKeypoints(y_channel, kp, work_image, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    image_w_keypoints = cv.drawKeypoints(y_channel, kp, working_image, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     # Stack the original image and the image with keypoints side-by-side for comparison
     final_image = np.hstack([image, image_w_keypoints])
@@ -143,7 +161,7 @@ def main():
         Use 'python siftImages.py image-path1 image-path2.....' to run task 2")
         return
 
-    # code for task 1
+    # Code for task 1 in case of 1 image as argument
     if len(sys.argv) == 2:
         # Extract the image path
         image_path = sys.argv[1]
@@ -158,10 +176,35 @@ def main():
             exit()
         else:
             resized_image = resize_to_vga(image) # resize the image close to VGA size
-            sift_extractor(resized_image, image_name)
-    # code for task 2
+            display_sift_features(resized_image, image_name)
+    # Code for task 1 in case of more tgan 1 images as argument
     else:
-        pass
+        # Intialize arrays to store keypoints and descriptors for future use
+        keypoints_list = []
+        descriptors_list = []
+
+        images = sys.argv[1:]
+
+        for image_path in images:
+            # Read the image
+            image = cv.imread(image_path)
+            resized_image = resize_to_vga(image) # resize the image close to VGA size
+            image_name = os.path.basename(image_path)
+
+            working_image = resized_image.copy()
+            yuv = cv.cvtColor(working_image, cv.COLOR_BGR2YUV)
+
+            # Extract the Y (luminance) component from the YUV image
+            y_channel = yuv[:,:,0]
+
+            kp, des = sift_extractor(y_channel) # Extract keypoints and descriptors
+
+            # Add keypoints and descriptors to an array
+            keypoints_list.append(kp)
+            descriptors_list.append(des)
+
+            print(f"# of keypoints in {image_name} is {len(kp)}")
+        exit()
 
 
 if __name__ == "__main__":
