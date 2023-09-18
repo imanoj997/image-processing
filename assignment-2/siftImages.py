@@ -89,13 +89,14 @@ def display_image(image, window_name="Image"):
     cv.destroyAllWindows()
 
 
-def sift_extractor(image):
+def sift_extractor(image, image_name):
     """
     Extracts SIFT keypoints from the luminance (Y) component of an image 
     and displays the image with the keypoints highlighted.
 
     Args:
     - image (cv2: img): Image from which to extract SIFT keypoints.
+    - image_name (str): name of the image
     """
     work_image = image.copy()
     yuv = cv.cvtColor(work_image, cv.COLOR_BGR2YUV)
@@ -120,7 +121,7 @@ def sift_extractor(image):
     # Stack the original image and the image with keypoints side-by-side for comparison
     final_image = np.hstack([image, image_w_keypoints])
     display_image(final_image)
-
+    # print(f"# of keypoints in {image.name} is {len(kp)}")
 
 
 def to_3channel_gray(single_channel_image):
@@ -136,62 +137,7 @@ def to_3channel_gray(single_channel_image):
     """
     return cv.merge([single_channel_image, single_channel_image, single_channel_image])
 
-
-def rgb_to_color_spaces(img, color_space):
-    """
-    This function converts RGB image to other color spaces
-    and displays it in a collage of original image alongside
-    3 grayscale versions of each channel of converted color spaces.
-
-    Args:
-    - img (cv2:img): cv2 image object of rgb image
-    - color_space (str): color space to convert image into
-    """
-    # Mapping color spaces with crossponding opencv conversion functions
-    cv_converter_mapping = {
-        "hsb": cv.COLOR_BGR2HSV_FULL,
-        "lab": cv.COLOR_BGR2Lab,
-        "xyz": cv.COLOR_BGR2XYZ,
-        "ycrcb": cv.COLOR_BGR2YCrCb
-    }
-    converted_image = cv.cvtColor(img, cv_converter_mapping[color_space])
-
-    # split the hsb image into individual channels
-    first_color_grayscale, second_color_grayscale, third_color_grayscale = cv.split(converted_image)
-
-   # Convert single channel grayscale images to 3-channel grayscale images because single channel grayscale
-   # and 3-channel original RGB image cannot be displayed in same window
-    first_color_3grayscale =  to_3channel_gray(first_color_grayscale)
-    second_color_3grayscale = to_3channel_gray(second_color_grayscale)
-    third_color_3grayscale = to_3channel_gray(third_color_grayscale)
-
-    if color_space in ("lab", "ycrcb"):
-        # normalizing the a and b channel pixel values to range of 0-255 for Lab color space because they originally have [-127,127] range
-        # normalizing the Cr and Cb channel pixel values to range of 0-255 for YCrCb color space because they originally have [16, 240] range
-        second_color_3grayscale = cv.normalize(second_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
-        third_color_3grayscale = cv.normalize(third_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
-        if color_space == "ycrcb":
-            # normalizing the Y channel pixel values to range of 0-255 for YCrCb color space because they originally have [16, 235] range
-            first_color_3grayscale = cv.normalize(first_color_3grayscale, None, 0, 255, cv.NORM_MINMAX)
-
-    # Stack images horizontally
-    if color_space == "hsb":
-        # for hsb color space 1st, 2nd and 3rd channels are to be displayed in 3rd, 4th and 1st quadrants respectively
-        top_row = np.hstack([img, third_color_3grayscale])
-        bottom_row = np.hstack([first_color_3grayscale, second_color_3grayscale])
-    else:
-        # for all other color spaces 1st, 2nd and 3rd channels are to be displayed in 1st, 3rd and 4th quadrants respectively
-        top_row = np.hstack([img, first_color_3grayscale])
-        bottom_row = np.hstack([second_color_3grayscale, third_color_3grayscale])
-
-    # Stack images vertically
-    final_img = np.vstack([top_row, bottom_row])
-
-    # Display the final image
-    display_image(final_img, "Color Space Conversion")
-
 def main():
-    print(len(sys.argv))
     if len(sys.argv) == 1:
         print("Error: Invalid command \n Use 'python siftImages.py image-path' to run task 1 \n \
         Use 'python siftImages.py image-path1 image-path2.....' to run task 2")
@@ -204,15 +150,15 @@ def main():
         check_image_exists(image_path)
         # Read the image
         image = cv.imread(image_path)
+        image_name = os.path.basename(image_path)
 
         # Check if image was successfully loaded
         if image is None:
             print("Error: Cannot load image, might be a corrupted image.")
             exit()
         else:
-            # resizing image to roughly VGA size
-            resized_image = resize_to_vga(image)
-            sift_extractor(resized_image)
+            resized_image = resize_to_vga(image) # resize the image close to VGA size
+            sift_extractor(resized_image, image_name)
     # code for task 2
     else:
         pass
