@@ -109,7 +109,7 @@ def sift_extractor(image, extract_des=False):
 
 def display_sift_features(image, image_name):
     """
-    Extracts SIFT keypoints from the luminance (Y) component of an image 
+    Extracts SIFT keypoints from the luminance (Y) component of an image
     and displays the image with the keypoints highlighted.
 
     Args:
@@ -141,27 +141,29 @@ def display_sift_features(image, image_name):
     print(f"# of keypoints in {image_name} is {len(kp)}")
 
 
-def compute_chi_square_distance(his1, his2):
-    """
-    Calculates chi-squared distance between two histograms
-
-    - his1: first histogram
-    - his2: second histogram
-    """
-    return 0.5 * np.sum(((his1 - his2) ** 2) / (his1 + his2 + 1e-10))
-
-
-def compute_k_values(descriptors, percentages):
-    return [int(len(descriptors) * perc) for perc in percentages]
-
-
 def perform_kmeans_clustering(descriptors, k_val):
+    """
+    Performs K-means clustering on descriptors.
+
+    Args:
+    - descriptors (array): The combined descriptors from all images.
+    - k_val (int): The number of desired clusters.
+    """
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.2)
     _, lbls, centers = cv.kmeans(descriptors.astype(np.float32), k_val, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
     return lbls
 
 
 def compute_histograms(descriptors, lbls, count, k_val):
+    """
+    Computes histograms for images based on clustered descriptors.
+
+    Args:
+    - descriptors (np.array): The combined descriptors from all images.
+    - lbls (array): The labels indicating the cluster of each descriptor.
+    - count (int): Number of images.
+    - k_val (int): The number of clusters.
+    """
     hists = []
     for idx in range(count):
         current_desc = descriptors[idx::count]
@@ -172,10 +174,18 @@ def compute_histograms(descriptors, lbls, count, k_val):
 
 
 def print_dissimilarity_matrix(matrix, labels):
+    """
+    Prints the dissimilarity matrix in a formatted manner.
+
+    Args:
+    - matrix (list of list of float): The dissimilarity matrix values.
+    - labels (list of str): The labels (names) of the images.
+    """
     print("\t" + "\t".join(labels))
     for i, values in enumerate(matrix):
         formatted_values = ["{:.2f}".format(val) for val in values]
         print(f"{labels[i]}\t" + "\t".join(formatted_values))
+
 
 
 def display_dissimilarity_matrix(keypoints_list, descriptors_list):
@@ -186,15 +196,15 @@ def display_dissimilarity_matrix(keypoints_list, descriptors_list):
     - keypoints_list (array): array of keypoints from all images
     - descriptors_list (array): array of descriptors from all images
     """
-    percentages = [0.05, 0.10, 0.20]
-    all_k_values = compute_k_values(keypoints_list, percentages)
+    given_k_percentages = [0.05, 0.10, 0.20]
+    all_k_values = [int(len(keypoints_list) * perc) for perc in given_k_percentages]
 
     labels = perform_kmeans_clustering(np.array(descriptors_list), all_k_values[0])
 
     image_count = len(sys.argv) - 1
     hists = compute_histograms(descriptors_list, labels, image_count, all_k_values[0])
 
-    for K, perc in zip(all_k_values, percentages):
+    for K, perc in zip(all_k_values, given_k_percentages):
         print(f"\nK={perc*100}%*(total number of key-points)={K}")
         print("Dissimilarity Matrix")
 
@@ -203,7 +213,7 @@ def display_dissimilarity_matrix(keypoints_list, descriptors_list):
 
         for i in range(image_count):
             for j in range(i, image_count):
-                dist = compute_chi_square_distance(hists[i], hists[j])
+                dist = 0.5 * np.sum(((hists[i] - hists[j]) ** 2) / (hists[i] + hists[j] + 1e-10))
                 matrix[i, j] = dist
                 matrix[j, i] = dist
 
@@ -212,6 +222,7 @@ def display_dissimilarity_matrix(keypoints_list, descriptors_list):
         norm_matrix = (matrix - min_val) / (max_val - min_val + 1e-10)
 
         print_dissimilarity_matrix(norm_matrix, image_tags)
+
 
 def main():
     if len(sys.argv) == 1:
