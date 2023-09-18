@@ -121,7 +121,7 @@ def sift_extractor(image, image_name):
     # Stack the original image and the image with keypoints side-by-side for comparison
     final_image = np.hstack([image, image_w_keypoints])
     display_image(final_image)
-    # print(f"# of keypoints in {image.name} is {len(kp)}")
+    print(f"# of keypoints in {image_name} is {len(kp)}")
 
 
 def to_3channel_gray(single_channel_image):
